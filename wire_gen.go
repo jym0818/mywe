@@ -7,15 +7,30 @@
 package main
 
 import (
+	"github.com/google/wire"
+	"github.com/jym0818/mywe/internal/repository"
+	"github.com/jym0818/mywe/internal/repository/dao"
+	"github.com/jym0818/mywe/internal/service"
+	"github.com/jym0818/mywe/internal/web"
 	"github.com/jym0818/mywe/ioc"
 )
 
 // Injectors from wire.go:
 
 func InitWebServer() *App {
-	engine := ioc.InitWeb()
+	v := ioc.InitHandler()
+	db := ioc.InitDB()
+	userDAO := dao.NewuserDAO(db)
+	userRepository := repository.NewuserRepository(userDAO)
+	userService := service.NewuserService(userRepository)
+	userHandler := web.NewUserHandler(userService)
+	engine := ioc.InitWeb(v, userHandler)
 	app := &App{
 		server: engine,
 	}
 	return app
 }
+
+// wire.go:
+
+var user = wire.NewSet(web.NewUserHandler, service.NewuserService, repository.NewuserRepository, dao.NewuserDAO)

@@ -1,6 +1,7 @@
 package ioc
 
 import (
+	"github.com/jym0818/mywe/internal/repository/dao"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -8,14 +9,18 @@ import (
 
 func InitDB() *gorm.DB {
 	type Config struct {
-		dsn string `yaml:"dsn"`
+		DSN string `yaml:"dsn"`
 	}
 	var cfg Config
 	err := viper.UnmarshalKey("mysql", &cfg)
 	if err != nil {
 		panic(err)
 	}
-	db, err := gorm.Open(mysql.Open(cfg.dsn), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(cfg.DSN), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	err = dao.InitTable(db)
 	if err != nil {
 		panic(err)
 	}
