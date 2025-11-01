@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jym0818/mywe/internal/domain"
+	"github.com/jym0818/mywe/internal/repository/cache"
 	"github.com/jym0818/mywe/internal/repository/dao"
 )
 
@@ -15,10 +16,34 @@ var ErrUserNotFound = dao.ErrUserNotFound
 type UserRepository interface {
 	Create(ctx context.Context, user domain.User) error
 	FindByEmail(ctx context.Context, email string) (domain.User, error)
+	FindById(ctx context.Context, uid int64) (domain.User, error)
 }
 
 type userRepository struct {
-	dao dao.UserDAO
+	dao   dao.UserDAO
+	cache cache.UserCache
+}
+
+func (u *userRepository) FindById(ctx context.Context, uid int64) (domain.User, error) {
+	//先查缓存
+	user, err := u.cache.Get(ctx, uid)
+	if err == nil {
+		return user, nil
+	}
+	//查找数据库
+	ue, err := u.dao.FindById(ctx, uid)
+	if err != nil {
+		return domain.User{}, err
+	}
+	user = u.toDomain(ue)
+	//回写缓存 可以开一个goroutine
+	go func() {
+		er := u.cache.Set(ctx, user)
+		if er != nil {
+			//记录日志
+		}
+	}()
+	return user, nil
 }
 
 func (u *userRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
@@ -29,9 +54,10 @@ func (u *userRepository) FindByEmail(ctx context.Context, email string) (domain.
 	return u.toDomain(user), nil
 }
 
-func NewuserRepository(dao dao.UserDAO) UserRepository {
+func NewuserRepository(dao dao.UserDAO, cache cache.UserCache) UserRepository {
 	return &userRepository{
-		dao: dao,
+		dao:   dao,
+		cache: cache,
 	}
 }
 func (u *userRepository) Create(ctx context.Context, user domain.User) error {

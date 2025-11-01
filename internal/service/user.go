@@ -15,10 +15,15 @@ var ErrInvalidUserOrPassword = errors.New("账号或者密码错误")
 type UserService interface {
 	Signup(ctx context.Context, user domain.User) error
 	Login(ctx context.Context, email, password string) (domain.User, error)
+	Profile(ctx context.Context, uid int64) (domain.User, error)
 }
 
 type userService struct {
 	repo repository.UserRepository
+}
+
+func (u *userService) Profile(ctx context.Context, uid int64) (domain.User, error) {
+	return u.repo.FindById(ctx, uid)
 }
 
 func NewuserService(repo repository.UserRepository) UserService {

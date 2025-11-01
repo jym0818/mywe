@@ -133,9 +133,16 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 }
 
 func (h *UserHandler) Info(ctx *gin.Context) {
-	user, ok := ctx.MustGet("claims").(*UserClaims)
+	claims, ok := ctx.MustGet("claims").(*UserClaims)
 	if !ok {
 		ctx.JSON(http.StatusOK, Result{Code: errs.UserInternalServerError, Msg: "系统错误"})
+	}
+	user, err := h.svc.Profile(ctx.Request.Context(), claims.Uid)
+	if err != nil {
+		//记录日志
+		//告警
+		ctx.JSON(http.StatusOK, Result{Code: errs.UserNotFound, Msg: "用户不存在"})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, Result{Code: 200, Msg: "成功", Data: user})

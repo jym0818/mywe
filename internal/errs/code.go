@@ -9,4 +9,5 @@ const (
 	// 防止有人跟你过不去
 	UserInvalidOrPassword = 401002
 	UserDuplicateEmail    = 401003
+	UserNotFound          = 401004
 )
