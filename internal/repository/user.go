@@ -10,13 +10,23 @@ import (
 )
 
 var ErrUserDuplicateEmail = dao.ErrUserDuplicateEmail
+var ErrUserNotFound = dao.ErrUserNotFound
 
 type UserRepository interface {
-	Create(ctx context.Context, user domain.User) (err error)
+	Create(ctx context.Context, user domain.User) error
+	FindByEmail(ctx context.Context, email string) (domain.User, error)
 }
 
 type userRepository struct {
 	dao dao.UserDAO
+}
+
+func (u *userRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
+	user, err := u.dao.FindByEmail(ctx, email)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return u.toDomain(user), nil
 }
 
 func NewuserRepository(dao dao.UserDAO) UserRepository {
@@ -24,7 +34,7 @@ func NewuserRepository(dao dao.UserDAO) UserRepository {
 		dao: dao,
 	}
 }
-func (u *userRepository) Create(ctx context.Context, user domain.User) (err error) {
+func (u *userRepository) Create(ctx context.Context, user domain.User) error {
 	return u.dao.Insert(ctx, u.toEntity(user))
 }
 

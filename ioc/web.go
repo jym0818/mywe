@@ -7,6 +7,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jym0818/mywe/internal/web"
+	"github.com/jym0818/mywe/internal/web/middleware"
 )
 
 func InitWeb(hds []gin.HandlerFunc, userHandler *web.UserHandler) *gin.Engine {
@@ -40,5 +41,7 @@ func InitHandler() []gin.HandlerFunc {
 		},
 		// 用于缓存预检请求结果的最大时间（CORS中的Access-Control-Max-Age）
 		MaxAge: 12 * time.Hour,
-	})}
+	}),
+		middleware.NewLoginMiddlewareBuilder().IgnorePath("/user/signup").IgnorePath("/user/login").Builder(),
+	}
 }
