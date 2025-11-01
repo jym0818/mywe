@@ -18,7 +18,8 @@ import (
 // Injectors from wire.go:
 
 func InitWebServer() *App {
-	v := ioc.InitHandler()
+	cmdable := ioc.InitRedis()
+	v := ioc.InitHandler(cmdable)
 	db := ioc.InitDB()
 	userDAO := dao.NewuserDAO(db)
 	userRepository := repository.NewuserRepository(userDAO)

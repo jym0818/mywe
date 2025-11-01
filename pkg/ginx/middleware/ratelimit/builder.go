@@ -49,5 +49,5 @@ func (b *Builder) Build() gin.HandlerFunc {
 
 func (b *Builder) limit(ctx context.Context, ip string) (bool, error) {
 	key := fmt.Sprintf("%s:%s", b.prefix, ip)
-	return b.cmd.Eval(ctx, luaScript, []string{key}, b.interval, b.threshold, time.Now().UnixMilli()).Bool()
+	return b.cmd.Eval(ctx, luaScript, []string{key}, b.interval.Milliseconds(), b.threshold, time.Now().UnixMilli()).Bool()
 }

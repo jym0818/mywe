@@ -23,6 +23,7 @@ func InitWebServer() *App {
 		user,
 		ioc.InitWeb,
 		ioc.InitDB,
+		ioc.InitRedis,
 		ioc.InitHandler,
 		wire.Struct(new(App), "*"),
 	)
