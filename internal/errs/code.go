@@ -10,4 +10,6 @@ const (
 	UserInvalidOrPassword = 401002
 	UserDuplicateEmail    = 401003
 	UserNotFound          = 401004
+	UserCodeSendTooMany   = 401005
+	UserVerifyCodeErr     = 401006
 )

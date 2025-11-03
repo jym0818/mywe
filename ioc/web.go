@@ -45,6 +45,8 @@ func InitHandler(cmd redis.Cmdable) []gin.HandlerFunc {
 		MaxAge: 12 * time.Hour,
 	}),
 		ratelimit.NewBuilder(cmd, 100, time.Minute).Build(),
-		middleware.NewLoginMiddlewareBuilder().IgnorePath("/user/signup").IgnorePath("/user/login").Builder(),
+		middleware.NewLoginMiddlewareBuilder().IgnorePath("/user/signup").IgnorePath("/user/login").
+			IgnorePath("/user/login_sms/send").
+			IgnorePath("/user/login_sms/LoginSMS").Builder(),
 	}
 }

@@ -9,6 +9,7 @@ package main
 import (
 	"github.com/google/wire"
 	"github.com/jym0818/mywe/internal/repository"
+	"github.com/jym0818/mywe/internal/repository/cache"
 	"github.com/jym0818/mywe/internal/repository/dao"
 	"github.com/jym0818/mywe/internal/service"
 	"github.com/jym0818/mywe/internal/web"
@@ -22,9 +23,14 @@ func InitWebServer() *App {
 	v := ioc.InitHandler(cmdable)
 	db := ioc.InitDB()
 	userDAO := dao.NewuserDAO(db)
-	userRepository := repository.NewuserRepository(userDAO)
+	userCache := cache.NewuserCache(cmdable)
+	userRepository := repository.NewuserRepository(userDAO, userCache)
 	userService := service.NewuserService(userRepository)
-	userHandler := web.NewUserHandler(userService)
+	smsService := ioc.InitSMS()
+	codeCache := cache.NewcodeCache(cmdable)
+	codeRepository := repository.NewcodeRepository(codeCache)
+	codeService := service.NewCodeService(smsService, codeRepository)
+	userHandler := web.NewUserHandler(userService, codeService)
 	engine := ioc.InitWeb(v, userHandler)
 	app := &App{
 		server: engine,
@@ -34,4 +40,6 @@ func InitWebServer() *App {
 
 // wire.go:
 
-var user = wire.NewSet(web.NewUserHandler, service.NewuserService, repository.NewuserRepository, dao.NewuserDAO)
+var user = wire.NewSet(web.NewUserHandler, service.NewuserService, repository.NewuserRepository, dao.NewuserDAO, cache.NewuserCache)
+
+var code = wire.NewSet(service.NewCodeService, repository.NewcodeRepository, cache.NewcodeCache)

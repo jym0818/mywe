@@ -4,6 +4,7 @@ go 1.23.7
 
 require (
 	github.com/dlclark/regexp2 v1.11.5
+	github.com/ecodeclub/ekit v0.0.10
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-sql-driver/mysql v1.9.3
@@ -11,6 +12,7 @@ require (
 	github.com/google/wire v0.7.0
 	github.com/redis/go-redis/v9 v9.16.0
 	github.com/spf13/viper v1.21.0
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.1.0
 	golang.org/x/crypto v0.40.0
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.31.0
@@ -49,6 +51,7 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.1.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
 	go.uber.org/mock v0.5.0 // indirect

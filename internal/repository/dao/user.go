@@ -17,6 +17,7 @@ type UserDAO interface {
 	Insert(ctx context.Context, user User) error
 	FindByEmail(ctx context.Context, email string) (User, error)
 	FindById(ctx context.Context, uid int64) (User, error)
+	FindByPhone(ctx context.Context, phone string) (User, error)
 }
 type userDAO struct {
 	db *gorm.DB
@@ -31,6 +32,11 @@ func (u *userDAO) FindById(ctx context.Context, uid int64) (User, error) {
 func (u *userDAO) FindByEmail(ctx context.Context, email string) (User, error) {
 	var user User
 	err := u.db.WithContext(ctx).Where("email= ?", email).First(&user).Error
+	return user, err
+}
+func (u *userDAO) FindByPhone(ctx context.Context, phone string) (User, error) {
+	var user User
+	err := u.db.WithContext(ctx).Where("phone= ?", phone).First(&user).Error
 	return user, err
 }
 

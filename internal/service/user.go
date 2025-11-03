@@ -16,10 +16,31 @@ type UserService interface {
 	Signup(ctx context.Context, user domain.User) error
 	Login(ctx context.Context, email, password string) (domain.User, error)
 	Profile(ctx context.Context, uid int64) (domain.User, error)
+	FindOrCreate(ctx context.Context, phone string) (domain.User, error)
 }
 
 type userService struct {
 	repo repository.UserRepository
+}
+
+func (u *userService) FindOrCreate(ctx context.Context, phone string) (domain.User, error) {
+	//查找
+	user, err := u.repo.FindByPhone(ctx, phone)
+	if err == nil {
+		return user, nil
+	}
+	//系统错误
+	if err != repository.ErrUserNotFound {
+		return domain.User{}, err
+	}
+	//不存在 就去注册
+	err = u.repo.Create(ctx, domain.User{Phone: phone})
+	//注册失败 返回错误
+	if err != nil && err != repository.ErrUserDuplicateEmail {
+		return domain.User{}, err
+	}
+	return u.repo.FindByPhone(ctx, phone)
+
 }
 
 func (u *userService) Profile(ctx context.Context, uid int64) (domain.User, error) {

@@ -17,6 +17,7 @@ type UserRepository interface {
 	Create(ctx context.Context, user domain.User) error
 	FindByEmail(ctx context.Context, email string) (domain.User, error)
 	FindById(ctx context.Context, uid int64) (domain.User, error)
+	FindByPhone(ctx context.Context, phone string) (domain.User, error)
 }
 
 type userRepository struct {
@@ -48,6 +49,14 @@ func (u *userRepository) FindById(ctx context.Context, uid int64) (domain.User, 
 
 func (u *userRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
 	user, err := u.dao.FindByEmail(ctx, email)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return u.toDomain(user), nil
+}
+
+func (u *userRepository) FindByPhone(ctx context.Context, phone string) (domain.User, error) {
+	user, err := u.dao.FindByPhone(ctx, phone)
 	if err != nil {
 		return domain.User{}, err
 	}
