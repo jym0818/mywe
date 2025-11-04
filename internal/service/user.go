@@ -17,6 +17,7 @@ type UserService interface {
 	Login(ctx context.Context, email, password string) (domain.User, error)
 	Profile(ctx context.Context, uid int64) (domain.User, error)
 	FindOrCreate(ctx context.Context, phone string) (domain.User, error)
+	FindOrCreateByWechat(ctx context.Context, wechat domain.Wechat) (domain.User, error)
 }
 
 type userService struct {
@@ -51,6 +52,23 @@ func NewuserService(repo repository.UserRepository) UserService {
 	return &userService{
 		repo: repo,
 	}
+}
+
+func (u *userService) FindOrCreateByWechat(ctx context.Context, info domain.Wechat) (domain.User, error) {
+	//查找
+	user, err := u.repo.FindByWechat(ctx, info.OpenID)
+	if err != repository.ErrUserNotFound {
+		return user, nil
+	}
+	//创建
+	err = u.repo.Create(ctx, domain.User{
+		Wechat: info,
+	})
+	if err != nil {
+		return domain.User{}, err
+	}
+	//创建成功，再次找
+	return u.repo.FindByWechat(ctx, info.OpenID)
 }
 func (u *userService) Signup(ctx context.Context, user domain.User) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)

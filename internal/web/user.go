@@ -3,10 +3,8 @@ package web
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	regexp "github.com/dlclark/regexp2"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/jym0818/mywe/internal/domain"
 	"github.com/jym0818/mywe/internal/errs"
 	"github.com/jym0818/mywe/internal/service"
@@ -24,6 +22,7 @@ type UserHandler struct {
 	passwordRexExp *regexp.Regexp
 	svc            service.UserService
 	codeSvc        service.CodeService
+	jwtHandler
 }
 
 func NewUserHandler(svc service.UserService, codeSvc service.CodeService) *UserHandler {
@@ -33,6 +32,7 @@ func NewUserHandler(svc service.UserService, codeSvc service.CodeService) *UserH
 		passwordRexExp: regexp.MustCompile(passwordRegexPattern, regexp.None),
 		svc:            svc,
 		codeSvc:        codeSvc,
+		jwtHandler:     jwtHandler{},
 	}
 }
 
@@ -127,23 +127,6 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Result{Code: 200, Msg: "登录成功"})
 }
 
-func (h *UserHandler) setJWT(ctx *gin.Context, user domain.User) error {
-	claims := UserClaims{
-		Uid:       user.Id,
-		UserAgent: ctx.GetHeader("User-Agent"),
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := token.SignedString([]byte("sDKU8mor4FhrCDsFmmMYifqYb8u2X4c7"))
-	if err != nil {
-		return err
-	}
-	ctx.Header("x-jwt-token", tokenStr)
-	return nil
-}
-
 func (h *UserHandler) Info(ctx *gin.Context) {
 	claims, ok := ctx.MustGet("claims").(*UserClaims)
 	if !ok {
@@ -215,10 +198,4 @@ func (h *UserHandler) LoginSMS(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, Result{Code: 200, Msg: "登录成功"})
-}
-
-type UserClaims struct {
-	Uid       int64
-	UserAgent string
-	jwt.RegisteredClaims
 }

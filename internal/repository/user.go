@@ -18,6 +18,7 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (domain.User, error)
 	FindById(ctx context.Context, uid int64) (domain.User, error)
 	FindByPhone(ctx context.Context, phone string) (domain.User, error)
+	FindByWechat(ctx context.Context, openId string) (domain.User, error)
 }
 
 type userRepository struct {
@@ -75,23 +76,36 @@ func (u *userRepository) Create(ctx context.Context, user domain.User) error {
 
 func (u *userRepository) toEntity(user domain.User) dao.User {
 	return dao.User{
-		Id:       user.Id,
-		Email:    sql.NullString{String: user.Email, Valid: user.Email != ""},
-		Phone:    sql.NullString{String: user.Phone, Valid: user.Phone != ""},
-		Password: user.Password,
-		Ctime:    user.Ctime.UnixMilli(),
-		Utime:    user.Utime.UnixMilli(),
-		Nickname: user.Nickname,
+		Id:            user.Id,
+		Email:         sql.NullString{String: user.Email, Valid: user.Email != ""},
+		Phone:         sql.NullString{String: user.Phone, Valid: user.Phone != ""},
+		WechatOpenID:  sql.NullString{String: user.Wechat.OpenID, Valid: user.Wechat.OpenID != ""},
+		WechatUnionID: sql.NullString{String: user.Wechat.UnionID, Valid: user.Wechat.UnionID != ""},
+		Password:      user.Password,
+		Ctime:         user.Ctime.UnixMilli(),
+		Utime:         user.Utime.UnixMilli(),
+		Nickname:      user.Nickname,
 	}
 }
 func (u *userRepository) toDomain(user dao.User) domain.User {
 	return domain.User{
-		Id:       user.Id,
-		Email:    user.Email.String,
-		Phone:    user.Phone.String,
+		Id:    user.Id,
+		Email: user.Email.String,
+		Phone: user.Phone.String,
+		Wechat: domain.Wechat{
+			OpenID:  user.WechatOpenID.String,
+			UnionID: user.WechatUnionID.String,
+		},
 		Password: user.Password,
 		Ctime:    time.UnixMilli(user.Ctime),
 		Utime:    time.UnixMilli(user.Utime),
 		Nickname: user.Nickname,
 	}
+}
+func (u *userRepository) FindByWechat(ctx context.Context, openId string) (domain.User, error) {
+	user, err := u.dao.FindByWechat(ctx, openId)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return u.toDomain(user), nil
 }
