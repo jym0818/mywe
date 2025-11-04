@@ -9,6 +9,7 @@ import (
 	"github.com/jym0818/mywe/internal/web"
 	"github.com/jym0818/mywe/internal/web/middleware"
 	"github.com/jym0818/mywe/pkg/ginx/middleware/ratelimit"
+	ratelimit2 "github.com/jym0818/mywe/pkg/ratelimit"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -19,7 +20,7 @@ func InitWeb(hds []gin.HandlerFunc, userHandler *web.UserHandler) *gin.Engine {
 	return s
 }
 
-func InitHandler(cmd redis.Cmdable) []gin.HandlerFunc {
+func InitHandler(cmd redis.Cmdable, limiter ratelimit2.Limiter) []gin.HandlerFunc {
 	return []gin.HandlerFunc{cors.New(cors.Config{
 		// 允许的源地址（CORS中的Access-Control-Allow-Origin）
 		// AllowOrigins: []string{"https://foo.com"},
@@ -44,7 +45,7 @@ func InitHandler(cmd redis.Cmdable) []gin.HandlerFunc {
 		// 用于缓存预检请求结果的最大时间（CORS中的Access-Control-Max-Age）
 		MaxAge: 12 * time.Hour,
 	}),
-		ratelimit.NewBuilder(cmd, 100, time.Minute).Build(),
+		ratelimit.NewBuilder(limiter).Build(),
 		middleware.NewLoginMiddlewareBuilder().IgnorePath("/user/signup").IgnorePath("/user/login").
 			IgnorePath("/user/login_sms/send").
 			IgnorePath("/user/login_sms/LoginSMS").Builder(),

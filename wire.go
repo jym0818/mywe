@@ -34,6 +34,7 @@ func InitWebServer() *App {
 		ioc.InitDB,
 		ioc.InitRedis,
 		ioc.InitHandler,
+		ioc.InitRatelimit,
 		wire.Struct(new(App), "*"),
 	)
 	return new(App)

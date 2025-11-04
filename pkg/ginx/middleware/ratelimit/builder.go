@@ -1,39 +1,31 @@
 package ratelimit
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
+	"github.com/jym0818/mywe/pkg/ratelimit"
 )
 
-//go:embed slide_window.lua
-var luaScript string
-
 type Builder struct {
-	cmd       redis.Cmdable
-	threshold int
-	interval  time.Duration
-	prefix    string
+	prefix  string
+	limiter ratelimit.Limiter
 }
 
-func NewBuilder(cmd redis.Cmdable, threshold int, interval time.Duration) *Builder {
+func NewBuilder(limiter ratelimit.Limiter) *Builder {
 	return &Builder{
-		cmd:       cmd,
-		threshold: threshold,
-		interval:  interval,
-		prefix:    "ip-limiter",
+		prefix:  "ip-limiter",
+		limiter: limiter,
 	}
 }
 
 func (b *Builder) Build() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
-		ok, err := b.limit(c.Request.Context(), ip)
+		key := fmt.Sprintf("%s:%s", b.prefix, ip)
+		ok, err := b.limiter.Limit(c.Request.Context(), key)
 		if err != nil {
 			//限流
 			c.AbortWithStatus(http.StatusServiceUnavailable)
@@ -45,9 +37,4 @@ func (b *Builder) Build() gin.HandlerFunc {
 		}
 		c.Next()
 	}
-}
-
-func (b *Builder) limit(ctx context.Context, ip string) (bool, error) {
-	key := fmt.Sprintf("%s:%s", b.prefix, ip)
-	return b.cmd.Eval(ctx, luaScript, []string{key}, b.interval.Milliseconds(), b.threshold, time.Now().UnixMilli()).Bool()
 }

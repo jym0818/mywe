@@ -20,13 +20,14 @@ import (
 
 func InitWebServer() *App {
 	cmdable := ioc.InitRedis()
-	v := ioc.InitHandler(cmdable)
+	limiter := ioc.InitRatelimit(cmdable)
+	v := ioc.InitHandler(cmdable, limiter)
 	db := ioc.InitDB()
 	userDAO := dao.NewuserDAO(db)
 	userCache := cache.NewuserCache(cmdable)
 	userRepository := repository.NewuserRepository(userDAO, userCache)
 	userService := service.NewuserService(userRepository)
-	smsService := ioc.InitSMS()
+	smsService := ioc.InitSMS(cmdable)
 	codeCache := cache.NewcodeCache(cmdable)
 	codeRepository := repository.NewcodeRepository(codeCache)
 	codeService := service.NewCodeService(smsService, codeRepository)
