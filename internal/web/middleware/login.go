@@ -1,20 +1,24 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jym0818/mywe/internal/web"
+	"github.com/redis/go-redis/v9"
 )
 
 type LoginMiddlewareBuilder struct {
 	paths []string
+	cmd   redis.Cmdable
 }
 
-func NewLoginMiddlewareBuilder() *LoginMiddlewareBuilder {
-	return &LoginMiddlewareBuilder{}
+func NewLoginMiddlewareBuilder(cmd redis.Cmdable) *LoginMiddlewareBuilder {
+	return &LoginMiddlewareBuilder{
+		cmd: cmd,
+	}
 }
 
 func (l *LoginMiddlewareBuilder) IgnorePath(path string) *LoginMiddlewareBuilder {
@@ -30,16 +34,10 @@ func (l *LoginMiddlewareBuilder) Builder() gin.HandlerFunc {
 			}
 		}
 
-		tokenStr := c.GetHeader("Authorization")
-		segs := strings.Split(tokenStr, " ")
-		if len(segs) != 2 {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-		t := segs[1]
+		t := web.ExtractToken(c)
 		claims := &web.UserClaims{}
 		token, err := jwt.ParseWithClaims(t, claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte("sDKU8mor4FhrCDsFmmMYifqYb8u2X4c7"), nil
+			return web.AtKey, nil
 		})
 		if err != nil {
 			c.AbortWithStatus(http.StatusUnauthorized)
@@ -52,6 +50,13 @@ func (l *LoginMiddlewareBuilder) Builder() gin.HandlerFunc {
 		if claims.UserAgent != c.Request.UserAgent() {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
+
+		logout, err := l.cmd.Exists(c, fmt.Sprintf("user:ssid:%s", claims.Ssid)).Result()
+		if logout > 0 || err != nil {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
 		c.Set("claims", claims)
 	}
 }

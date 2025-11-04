@@ -22,6 +22,14 @@ type wechatService struct {
 	client    *http.Client
 }
 
+func NewwechatService(appId string, appSecret string) WechatService {
+	return &wechatService{
+		appId:     appId,
+		appSecret: appSecret,
+		client:    http.DefaultClient,
+	}
+}
+
 func (svc *wechatService) AuthURL(ctx context.Context, state string) (string, error) {
 	const urlPattern = "https://open.weixin.qq.com/connect/qrconnect?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_login&state=%s#wechat_redirect"
 	return fmt.Sprintf(urlPattern, svc.appId, redirectURI, state), nil

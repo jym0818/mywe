@@ -13,10 +13,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func InitWeb(hds []gin.HandlerFunc, userHandler *web.UserHandler) *gin.Engine {
+func InitWeb(hds []gin.HandlerFunc, userHandler *web.UserHandler, wechatHandler *web.WechatHandler) *gin.Engine {
 	s := gin.New()
 	s.Use(hds...)
 	userHandler.RegisterRouters(s)
+	wechatHandler.RegisterRouters(s)
 	return s
 }
 
@@ -46,8 +47,9 @@ func InitHandler(cmd redis.Cmdable, limiter ratelimit2.Limiter) []gin.HandlerFun
 		MaxAge: 12 * time.Hour,
 	}),
 		ratelimit.NewBuilder(limiter).Build(),
-		middleware.NewLoginMiddlewareBuilder().IgnorePath("/user/signup").IgnorePath("/user/login").
+		middleware.NewLoginMiddlewareBuilder(cmd).IgnorePath("/user/signup").IgnorePath("/user/login").
 			IgnorePath("/user/login_sms/send").
-			IgnorePath("/user/login_sms/LoginSMS").Builder(),
+			IgnorePath("/user/login_sms/LoginSMS").
+			IgnorePath("/user/refresh").Builder(),
 	}
 }

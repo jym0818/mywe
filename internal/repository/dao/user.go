@@ -56,11 +56,11 @@ func (u *userDAO) Insert(ctx context.Context, user User) error {
 	}
 	return err
 }
-func (dao *userDAO) FindByWechat(ctx context.Context, openID string) (User, error) {
-	var u User
-	err := dao.db.WithContext(ctx).Where("WechatOpenID = ?", openID).First(&u).Error
+func (u *userDAO) FindByWechat(ctx context.Context, openID string) (User, error) {
+	var user User
+	err := u.db.WithContext(ctx).Where("WechatOpenID = ?", openID).First(&user).Error
 	//无需检查错误，找不到会返回ErrRecordNotFound和空结构体
-	return u, err
+	return user, err
 }
 func NewuserDAO(db *gorm.DB) UserDAO {
 	return &userDAO{db: db}

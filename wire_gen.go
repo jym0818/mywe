@@ -31,8 +31,10 @@ func InitWebServer() *App {
 	codeCache := cache.NewcodeCache(cmdable)
 	codeRepository := repository.NewcodeRepository(codeCache)
 	codeService := service.NewCodeService(smsService, codeRepository)
-	userHandler := web.NewUserHandler(userService, codeService)
-	engine := ioc.InitWeb(v, userHandler)
+	userHandler := web.NewUserHandler(userService, codeService, cmdable)
+	wechatService := ioc.InitWechat()
+	wechatHandler := web.NewWechatHandler(wechatService, userService)
+	engine := ioc.InitWeb(v, userHandler, wechatHandler)
 	app := &App{
 		server: engine,
 	}

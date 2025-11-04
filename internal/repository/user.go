@@ -37,6 +37,7 @@ func (u *userRepository) FindById(ctx context.Context, uid int64) (domain.User, 
 	if err != nil {
 		return domain.User{}, err
 	}
+
 	user = u.toDomain(ue)
 	//回写缓存 可以开一个goroutine
 	go func() {
