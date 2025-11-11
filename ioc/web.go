@@ -13,11 +13,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func InitWeb(hds []gin.HandlerFunc, userHandler *web.UserHandler, wechatHandler *web.WechatHandler) *gin.Engine {
+func InitWeb(hds []gin.HandlerFunc, userHandler *web.UserHandler, wechatHandler *web.WechatHandler, articleHandler *web.ArticleHandler) *gin.Engine {
 	s := gin.New()
 	s.Use(hds...)
 	userHandler.RegisterRouters(s)
 	wechatHandler.RegisterRouters(s)
+	articleHandler.RegisterRouter(s)
 	return s
 }
 

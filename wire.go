@@ -25,10 +25,17 @@ var code = wire.NewSet(
 	repository.NewcodeRepository,
 	cache.NewcodeCache)
 
+var article = wire.NewSet(
+	web.NewArticleHandler,
+	service.NewarticleService,
+	repository.NewarticleRepository,
+	dao.NewarticleDAO)
+
 func InitWebServer() *App {
 	wire.Build(
 		user,
 		code,
+		article,
 		ioc.InitLogger,
 		ioc.InitWechat,
 		web.NewWechatHandler,

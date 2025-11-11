@@ -35,7 +35,11 @@ func InitWebServer() *App {
 	userHandler := web.NewUserHandler(userService, codeService, cmdable, logger)
 	wechatService := ioc.InitWechat()
 	wechatHandler := web.NewWechatHandler(wechatService, userService)
-	engine := ioc.InitWeb(v, userHandler, wechatHandler)
+	articleDAO := dao.NewarticleDAO(db)
+	articleRepository := repository.NewarticleRepository(articleDAO)
+	articleService := service.NewarticleService(articleRepository)
+	articleHandler := web.NewArticleHandler(logger, articleService)
+	engine := ioc.InitWeb(v, userHandler, wechatHandler, articleHandler)
 	app := &App{
 		server: engine,
 	}
@@ -47,3 +51,5 @@ func InitWebServer() *App {
 var user = wire.NewSet(web.NewUserHandler, service.NewuserService, repository.NewuserRepository, dao.NewuserDAO, cache.NewuserCache)
 
 var code = wire.NewSet(service.NewCodeService, repository.NewcodeRepository, cache.NewcodeCache)
+
+var article = wire.NewSet(web.NewArticleHandler, service.NewarticleService, repository.NewarticleRepository, dao.NewarticleDAO)

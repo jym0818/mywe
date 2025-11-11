@@ -13,3 +13,6 @@ const (
 	UserCodeSendTooMany   = 401005
 	UserVerifyCodeErr     = 401006
 )
+const (
+	ArticleInternalServerError = 502001
+)
