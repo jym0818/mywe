@@ -28,6 +28,7 @@ func (l *LoginMiddlewareBuilder) IgnorePath(path string) *LoginMiddlewareBuilder
 
 func (l *LoginMiddlewareBuilder) Builder() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		for _, path := range l.paths {
 			if c.Request.URL.Path == path {
 				return

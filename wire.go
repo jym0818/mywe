@@ -29,6 +29,7 @@ func InitWebServer() *App {
 	wire.Build(
 		user,
 		code,
+		ioc.InitLogger,
 		ioc.InitWechat,
 		web.NewWechatHandler,
 		ioc.InitSMS,

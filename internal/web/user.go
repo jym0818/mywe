@@ -6,13 +6,13 @@ import (
 	"time"
 
 	regexp "github.com/dlclark/regexp2"
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jym0818/mywe/internal/domain"
 	"github.com/jym0818/mywe/internal/errs"
 	"github.com/jym0818/mywe/internal/service"
+	logger2 "github.com/jym0818/mywe/pkg/logger"
 	"github.com/redis/go-redis/v9"
-
-	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -27,9 +27,10 @@ type UserHandler struct {
 	codeSvc        service.CodeService
 	jwtHandler
 	cmd redis.Cmdable
+	l   logger2.Logger
 }
 
-func NewUserHandler(svc service.UserService, codeSvc service.CodeService, cmd redis.Cmdable) *UserHandler {
+func NewUserHandler(svc service.UserService, codeSvc service.CodeService, cmd redis.Cmdable, l logger2.Logger) *UserHandler {
 
 	return &UserHandler{
 		emailRexExp:    regexp.MustCompile(emailRegexPattern, regexp.None),
@@ -38,6 +39,7 @@ func NewUserHandler(svc service.UserService, codeSvc service.CodeService, cmd re
 		codeSvc:        codeSvc,
 		jwtHandler:     jwtHandler{},
 		cmd:            cmd,
+		l:              l,
 	}
 }
 
@@ -190,6 +192,7 @@ func (h *UserHandler) LoginSMS(ctx *gin.Context) {
 		return
 	}
 	if !ok {
+		h.l.Warn("验证码错误", logger2.String("phone", req.Phone))
 		ctx.JSON(http.StatusOK, Result{Code: errs.UserVerifyCodeErr, Msg: "验证码错误"})
 		return
 	}

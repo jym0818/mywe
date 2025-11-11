@@ -1,9 +1,12 @@
 package main
 
-import "github.com/spf13/viper"
+import (
+	"github.com/spf13/viper"
+)
 
 func main() {
 	initViper()
+
 	app := InitWebServer()
 
 	app.server.Run(":8080")
