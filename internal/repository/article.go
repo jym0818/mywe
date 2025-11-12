@@ -11,6 +11,8 @@ import (
 type ArticleRepository interface {
 	Create(ctx context.Context, art domain.Article) (int64, error)
 	Update(ctx context.Context, art domain.Article) error
+	Sync(ctx context.Context, art domain.Article) (int64, error)
+	SyncStatus(ctx context.Context, id int64, author int64, status domain.ArticleStatus) error
 }
 type articleRepository struct {
 	dao dao.ArticleDAO
@@ -25,6 +27,12 @@ func (repo *articleRepository) Create(ctx context.Context, art domain.Article) (
 func (repo *articleRepository) Update(ctx context.Context, art domain.Article) error {
 	return repo.dao.UpdateById(ctx, repo.toEntity(art))
 }
+
+func (repo *articleRepository) Sync(ctx context.Context, art domain.Article) (int64, error) {
+	id, err := repo.dao.Sync(ctx, repo.toEntity(art))
+	return id, err
+}
+
 func (repo *articleRepository) toEntity(art domain.Article) dao.Article {
 	return dao.Article{
 		Id:       art.Id,
@@ -33,6 +41,7 @@ func (repo *articleRepository) toEntity(art domain.Article) dao.Article {
 		AuthorId: art.Author.Id,
 		Ctime:    art.Ctime.UnixMilli(),
 		Utime:    art.Utime.UnixMilli(),
+		Status:   art.Status.ToUint8(),
 	}
 }
 
@@ -44,7 +53,11 @@ func (repo *articleRepository) toDomain(art dao.Article) domain.Article {
 		Author: domain.Author{
 			Id: art.AuthorId,
 		},
-		Ctime: time.UnixMilli(art.Ctime),
-		Utime: time.UnixMilli(art.Utime),
+		Ctime:  time.UnixMilli(art.Ctime),
+		Utime:  time.UnixMilli(art.Utime),
+		Status: domain.ArticleStatus(art.Status),
 	}
+}
+func (repo *articleRepository) SyncStatus(ctx context.Context, id int64, author int64, status domain.ArticleStatus) error {
+	return repo.dao.SyncStatus(ctx, id, author, uint8(status))
 }

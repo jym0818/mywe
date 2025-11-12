@@ -6,11 +6,15 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ArticleDAO interface {
 	Insert(ctx context.Context, art Article) (int64, error)
-	UpdateById(ctx context.Context, entity Article) error
+	UpdateById(ctx context.Context, art Article) error
+	Sync(ctx context.Context, art Article) (int64, error)
+	Upsert(ctx context.Context, art PublishedArticle) error
+	SyncStatus(ctx context.Context, id int64, author int64, status uint8) error
 }
 
 type articleDAO struct {
@@ -36,6 +40,7 @@ func (dao *articleDAO) UpdateById(ctx context.Context, art Article) error {
 		"utime":   now,
 		"content": art.Content,
 		"title":   art.Title,
+		"status":  art.Status,
 	})
 	if res.Error != nil {
 		return res.Error
@@ -45,6 +50,61 @@ func (dao *articleDAO) UpdateById(ctx context.Context, art Article) error {
 
 	}
 	return nil
+}
+
+func (dao *articleDAO) Sync(ctx context.Context, art Article) (int64, error) {
+	var id = art.Id
+	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var err error
+		txDAO := NewarticleDAO(tx)
+		if id > 0 {
+			err = txDAO.UpdateById(ctx, art)
+		} else {
+			id, err = txDAO.Insert(ctx, art)
+		}
+		if err != nil {
+			return err
+		}
+		art.Id = id
+		return txDAO.Upsert(ctx, PublishedArticle{art})
+
+	})
+	return id, err
+
+}
+
+func (dao *articleDAO) Upsert(ctx context.Context, art PublishedArticle) error {
+	now := time.Now().UnixMilli()
+	art.Ctime = now
+	art.Utime = now
+	return dao.db.WithContext(ctx).Clauses(clause.OnConflict{
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"utime":   art.Utime,
+			"content": art.Content,
+			"title":   art.Title,
+			"status":  art.Status,
+		}),
+	}).Create(&art).Error
+}
+
+func (dao *articleDAO) SyncStatus(ctx context.Context, id int64, author int64, status uint8) error {
+	now := time.Now().UnixMilli()
+	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		res := tx.Model(&Article{}).Where("id = ? AND author_id = ?", id, author).Updates(map[string]interface{}{
+			"status": status,
+			"utime":  now,
+		})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected == 0 {
+			return fmt.Errorf("可能有人在搞你，误操作非自己的文章, uid: %d, aid: %d", author, id)
+		}
+		return tx.Model(&PublishedArticle{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status": status,
+			"utime":  now,
+		}).Error
+	})
 }
 
 type Article struct {
@@ -57,4 +117,7 @@ type Article struct {
 	Status   uint8
 	Ctime    int64
 	Utime    int64
+}
+type PublishedArticle struct {
+	Article
 }
