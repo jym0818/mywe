@@ -15,6 +15,9 @@ type ArticleDAO interface {
 	Sync(ctx context.Context, art Article) (int64, error)
 	Upsert(ctx context.Context, art PublishedArticle) error
 	SyncStatus(ctx context.Context, id int64, author int64, status uint8) error
+	GetByAuthor(ctx context.Context, uid int64, offset int, limit int) ([]Article, error)
+	GetById(ctx context.Context, id int64) (Article, error)
+	GetPubById(ctx context.Context, id int64) (PublishedArticle, error)
 }
 
 type articleDAO struct {
@@ -26,6 +29,24 @@ func NewarticleDAO(db *gorm.DB) ArticleDAO {
 		db: db,
 	}
 }
+func (dao *articleDAO) GetById(ctx context.Context, id int64) (Article, error) {
+	var art Article
+	err := dao.db.WithContext(ctx).Where("id = ?", id).First(&art).Error
+	return art, err
+}
+
+func (dao *articleDAO) GetPubById(ctx context.Context, id int64) (PublishedArticle, error) {
+	var art PublishedArticle
+	err := dao.db.WithContext(ctx).Where("id = ?", id).First(&art).Error
+	return art, err
+}
+func (dao *articleDAO) GetByAuthor(ctx context.Context, uid int64, offset int, limit int) ([]Article, error) {
+	var arts []Article
+	err := dao.db.WithContext(ctx).Where("author = ?", uid).Offset(offset).Limit(limit).Order("utime DESC").Find(&arts).Error
+
+	return arts, err
+}
+
 func (dao *articleDAO) Insert(ctx context.Context, art Article) (int64, error) {
 	now := time.Now().UnixMilli()
 	art.Ctime = now

@@ -2,7 +2,10 @@ package web
 
 import (
 	"net/http"
+	"strconv"
+	"time"
 
+	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
 	"github.com/jym0818/mywe/internal/domain"
 	"github.com/jym0818/mywe/internal/errs"
@@ -24,6 +27,14 @@ func (h *ArticleHandler) RegisterRouter(s *gin.Engine) {
 	g.POST("/edit", h.Edit)
 	g.POST("/publish", h.Publish)
 	g.POST("/withdraw", h.Withdraw)
+
+	g.POST("/list", h.List)
+
+	g.GET("/detail/:id", h.Detail)
+
+	pub := g.Group("/pub")
+	//pub.GET("/pub", a.PubList)
+	pub.GET("/:id", h.PubDetail)
 }
 
 func (h *ArticleHandler) Edit(c *gin.Context) {
@@ -95,4 +106,114 @@ func (h *ArticleHandler) Withdraw(ctx *gin.Context) {
 		Msg: "OK",
 	})
 
+}
+
+func (h *ArticleHandler) List(ctx *gin.Context) {
+	var page Page
+	if err := ctx.ShouldBind(&page); err != nil {
+		return
+	}
+	claims := ctx.MustGet("claims").(*UserClaims)
+
+	arts, err := h.svc.GetByAuthor(ctx, claims.Uid, page.Offset, page.Limit)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Data: slice.Map[domain.Article, ArticleVo](arts, func(idx int, src domain.Article) ArticleVo {
+			return ArticleVo{
+				Id:       src.Id,
+				Title:    src.Title,
+				Abstract: src.Abstract(),
+				AuthorId: src.Author.Id,
+				Status:   src.Status.ToUint8(),
+				Ctime:    src.Ctime.Format(time.DateTime),
+				Utime:    src.Utime.Format(time.DateTime),
+			}
+		}),
+	})
+}
+
+func (h *ArticleHandler) Detail(ctx *gin.Context) {
+	idstr := ctx.Param("id")
+	id, err := strconv.ParseInt(idstr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Msg:  "id 参数错误",
+			Code: 4,
+		})
+		return
+	}
+	art, err := h.svc.GetById(ctx, id)
+
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Msg:  "系统错误",
+			Code: 5,
+		})
+
+		return
+	}
+	uc := ctx.MustGet("user").(*UserClaims)
+	if art.Author.Id != uc.Uid {
+		// 有人在搞鬼
+		ctx.JSON(http.StatusOK, Result{
+			Msg:  "系统错误",
+			Code: 5,
+		})
+		return
+	}
+	vo := ArticleVo{
+		Id:    art.Id,
+		Title: art.Title,
+
+		Content:  art.Content,
+		AuthorId: art.Author.Id,
+		// 列表，你不需要
+		Status: art.Status.ToUint8(),
+		Ctime:  art.Ctime.Format(time.DateTime),
+		Utime:  art.Utime.Format(time.DateTime),
+	}
+	ctx.JSON(http.StatusOK, Result{Data: vo})
+}
+
+func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
+	idstr := ctx.Param("id")
+	id, err := strconv.ParseInt(idstr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 4,
+			Msg:  "参数错误",
+		})
+
+		return
+	}
+	claims := ctx.MustGet("claims").(*UserClaims)
+
+	art, err := h.svc.GetPubById(ctx.Request.Context(), id, claims.Uid)
+
+	if err != nil {
+		// 代表查询出错了
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, Result{
+		Data: ArticleVo{
+			Id:      art.Id,
+			Title:   art.Title,
+			Status:  art.Status.ToUint8(),
+			Content: art.Content,
+			// 要把作者信息带出去
+			AuthorName: art.Author.Name,
+			Ctime:      art.Ctime.Format(time.DateTime),
+			Utime:      art.Utime.Format(time.DateTime),
+		},
+	})
 }

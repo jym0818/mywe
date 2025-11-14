@@ -6,26 +6,34 @@ type Article struct {
 	Id      int64
 	Title   string
 	Content string
-	Ctime   time.Time
-	Utime   time.Time
 	Author  Author
+	Utime   time.Time
+	Ctime   time.Time
 	Status  ArticleStatus
 }
+
+func (a Article) Abstract() string {
+	str := []rune(a.Content)
+	if len(str) > 128 {
+		str = str[:128]
+	}
+	return string(str)
+}
+
 type Author struct {
 	Id   int64
 	Name string
 }
-
 type ArticleStatus uint8
 
 const (
-	//未知状态   对于0值通常建议设置为无意义的值
-	ArticleStatusUnKnown ArticleStatus = iota
-	//未发表
-	ArticleStatusUnPublished
-	//已发表
+	// ArticleStatusUnknown 这是一个未知状态
+	ArticleStatusUnknown ArticleStatus = iota
+	// ArticleStatusUnpublished 未发表
+	ArticleStatusUnpublished
+	// ArticleStatusPublished 已发表
 	ArticleStatusPublished
-	//仅自己可见
+	// ArticleStatusPrivate 仅自己可见
 	ArticleStatusPrivate
 )
 
