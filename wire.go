@@ -4,6 +4,7 @@ package main
 
 import (
 	"github.com/google/wire"
+	article2 "github.com/jym0818/mywe/internal/events/article"
 	"github.com/jym0818/mywe/internal/repository"
 	"github.com/jym0818/mywe/internal/repository/cache"
 	"github.com/jym0818/mywe/internal/repository/dao"
@@ -29,13 +30,28 @@ var article = wire.NewSet(
 	web.NewArticleHandler,
 	service.NewarticleService,
 	repository.NewarticleRepository,
+	cache.NewarticleCache,
 	dao.NewarticleDAO)
+
+var interactive = wire.NewSet(
+	service.NewinteractiveService,
+	repository.NewinteractiveRepository,
+	cache.NewinteractiveCache,
+	dao.NewinteractiveDao,
+)
 
 func InitWebServer() *App {
 	wire.Build(
 		user,
 		code,
 		article,
+		interactive,
+
+		ioc.NewConsumers,
+		ioc.InitKafka,
+		ioc.NewSyncProducer,
+		article2.NewKafkaProducer,
+		article2.NewInteractiveReadEventConsumer,
 		ioc.InitLogger,
 		ioc.InitWechat,
 		web.NewWechatHandler,

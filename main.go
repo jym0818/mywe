@@ -8,7 +8,12 @@ func main() {
 	initViper()
 
 	app := InitWebServer()
-
+	for _, c := range app.consumers {
+		er := c.Start()
+		if er != nil {
+			panic(er)
+		}
+	}
 	app.server.Run(":8080")
 }
 

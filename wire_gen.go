@@ -8,6 +8,7 @@ package main
 
 import (
 	"github.com/google/wire"
+	article2 "github.com/jym0818/mywe/internal/events/article"
 	"github.com/jym0818/mywe/internal/repository"
 	"github.com/jym0818/mywe/internal/repository/cache"
 	"github.com/jym0818/mywe/internal/repository/dao"
@@ -36,12 +37,22 @@ func InitWebServer() *App {
 	wechatService := ioc.InitWechat()
 	wechatHandler := web.NewWechatHandler(wechatService, userService)
 	articleDAO := dao.NewarticleDAO(db)
-	articleRepository := repository.NewarticleRepository(articleDAO)
-	articleService := service.NewarticleService(articleRepository)
+	articleCache := cache.NewarticleCache(cmdable)
+	articleRepository := repository.NewarticleRepository(articleDAO, articleCache)
+	client := ioc.InitKafka()
+	syncProducer := ioc.NewSyncProducer(client)
+	producer := article2.NewKafkaProducer(syncProducer)
+	articleService := service.NewarticleService(articleRepository, producer)
 	articleHandler := web.NewArticleHandler(logger, articleService)
 	engine := ioc.InitWeb(v, userHandler, wechatHandler, articleHandler)
+	interactiveDao := dao.NewinteractiveDao(db)
+	interactiveCache := cache.NewinteractiveCache(cmdable)
+	interactiveRepository := repository.NewinteractiveRepository(interactiveDao, interactiveCache)
+	interactiveReadEventConsumer := article2.NewInteractiveReadEventConsumer(logger, interactiveRepository, client)
+	v2 := ioc.NewConsumers(interactiveReadEventConsumer)
 	app := &App{
-		server: engine,
+		server:    engine,
+		consumers: v2,
 	}
 	return app
 }
@@ -52,4 +63,6 @@ var user = wire.NewSet(web.NewUserHandler, service.NewuserService, repository.Ne
 
 var code = wire.NewSet(service.NewCodeService, repository.NewcodeRepository, cache.NewcodeCache)
 
-var article = wire.NewSet(web.NewArticleHandler, service.NewarticleService, repository.NewarticleRepository, dao.NewarticleDAO)
+var article = wire.NewSet(web.NewArticleHandler, service.NewarticleService, repository.NewarticleRepository, cache.NewarticleCache, dao.NewarticleDAO)
+
+var interactive = wire.NewSet(service.NewinteractiveService, repository.NewinteractiveRepository, cache.NewinteractiveCache, dao.NewinteractiveDao)

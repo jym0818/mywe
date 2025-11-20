@@ -18,10 +18,26 @@ type InteractiveDao interface {
 	GetLikeInfo(ctx context.Context, biz string, bizId int64, uid int64) (UserLikeBiz, error)
 	GetCollectInfo(ctx context.Context, biz string, bizId int64, uid int64) (UserCollectionBiz, error)
 	Get(ctx context.Context, biz string, id int64) (Interactive, error)
+	BatchIncrReadCnt(ctx context.Context, bizs []string, ids []int64) error
 }
 
 type interactiveDao struct {
 	db *gorm.DB
+}
+
+func (dao *interactiveDao) BatchIncrReadCnt(ctx context.Context, bizs []string, ids []int64) error {
+	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		txDAO := NewinteractiveDao(tx)
+		for i := range bizs {
+			err := txDAO.IncrReadCnt(ctx, bizs[i], ids[i])
+			if err != nil {
+				// 记个日志就拉到
+				// 也可以 return err
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func NewinteractiveDao(db *gorm.DB) InteractiveDao {
