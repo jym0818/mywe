@@ -8,6 +8,11 @@ package main
 
 import (
 	"github.com/google/wire"
+	"github.com/jym0818/mywe/interactive/events"
+	repository2 "github.com/jym0818/mywe/interactive/repository"
+	cache2 "github.com/jym0818/mywe/interactive/repository/cache"
+	dao2 "github.com/jym0818/mywe/interactive/repository/dao"
+	service2 "github.com/jym0818/mywe/interactive/service"
 	article2 "github.com/jym0818/mywe/internal/events/article"
 	"github.com/jym0818/mywe/internal/repository"
 	"github.com/jym0818/mywe/internal/repository/cache"
@@ -45,10 +50,10 @@ func InitWebServer() *App {
 	articleService := service.NewarticleService(articleRepository, producer)
 	articleHandler := web.NewArticleHandler(logger, articleService)
 	engine := ioc.InitWeb(v, userHandler, wechatHandler, articleHandler)
-	interactiveDao := dao.NewinteractiveDao(db)
-	interactiveCache := cache.NewinteractiveCache(cmdable)
-	interactiveRepository := repository.NewinteractiveRepository(interactiveDao, interactiveCache)
-	interactiveReadEventConsumer := article2.NewInteractiveReadEventConsumer(logger, interactiveRepository, client)
+	interactiveDao := dao2.NewinteractiveDao(db)
+	interactiveCache := cache2.NewinteractiveCache(cmdable)
+	interactiveRepository := repository2.NewinteractiveRepository(interactiveDao, interactiveCache)
+	interactiveReadEventConsumer := events.NewInteractiveReadEventConsumer(logger, interactiveRepository, client)
 	v2 := ioc.NewConsumers(interactiveReadEventConsumer)
 	app := &App{
 		server:    engine,
@@ -65,4 +70,4 @@ var code = wire.NewSet(service.NewCodeService, repository.NewcodeRepository, cac
 
 var article = wire.NewSet(web.NewArticleHandler, service.NewarticleService, repository.NewarticleRepository, cache.NewarticleCache, dao.NewarticleDAO)
 
-var interactive = wire.NewSet(service.NewinteractiveService, repository.NewinteractiveRepository, cache.NewinteractiveCache, dao.NewinteractiveDao)
+var interactive = wire.NewSet(service2.NewinteractiveService, repository2.NewinteractiveRepository, cache2.NewinteractiveCache, dao2.NewinteractiveDao)

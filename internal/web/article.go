@@ -7,6 +7,7 @@ import (
 
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
+	intrv1 "github.com/jym0818/mywe/api/proto/gen/intr/v1"
 	"github.com/jym0818/mywe/internal/domain"
 	"github.com/jym0818/mywe/internal/errs"
 	"github.com/jym0818/mywe/internal/service"
@@ -14,12 +15,13 @@ import (
 )
 
 type ArticleHandler struct {
-	l   logger2.Logger
-	svc service.ArticleService
+	l       logger2.Logger
+	svc     service.ArticleService
+	intrSvc intrv1.InteractiveServiceClient
 }
 
-func NewArticleHandler(l logger2.Logger, svc service.ArticleService) *ArticleHandler {
-	return &ArticleHandler{l: l, svc: svc}
+func NewArticleHandler(l logger2.Logger, svc service.ArticleService, intrSvc intrv1.InteractiveServiceClient) *ArticleHandler {
+	return &ArticleHandler{l: l, svc: svc, intrSvc: intrSvc}
 }
 
 func (h *ArticleHandler) RegisterRouter(s *gin.Engine) {
@@ -35,6 +37,7 @@ func (h *ArticleHandler) RegisterRouter(s *gin.Engine) {
 	pub := g.Group("/pub")
 	//pub.GET("/pub", a.PubList)
 	pub.GET("/:id", h.PubDetail)
+
 }
 
 func (h *ArticleHandler) Edit(c *gin.Context) {

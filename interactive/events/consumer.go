@@ -1,14 +1,19 @@
-package article
+package events
 
 import (
 	"context"
 	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/jym0818/mywe/internal/repository"
+	"github.com/jym0818/mywe/interactive/repository"
 	"github.com/jym0818/mywe/pkg/logger"
 	"github.com/jym0818/mywe/pkg/saramax"
 )
+
+type ReadEvent struct {
+	Aid int64
+	Uid int64
+}
 
 type InteractiveReadEventConsumer struct {
 	l      logger.Logger

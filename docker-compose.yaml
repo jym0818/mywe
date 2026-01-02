@@ -33,3 +33,12 @@ services:
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+
+
+  etcd:
+    image: 'bitnami/etcd:3.5.9'
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+    ports:
+      #      所以你要用 12379 端口来连接 etcd
+      - 12379:2379

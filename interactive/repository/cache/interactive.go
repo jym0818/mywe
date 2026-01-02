@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jym0818/mywe/internal/domain"
+	"github.com/jym0818/mywe/interactive/domain"
 	"github.com/redis/go-redis/v9"
 )
 

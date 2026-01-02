@@ -19,6 +19,7 @@ type InteractiveDao interface {
 	GetCollectInfo(ctx context.Context, biz string, bizId int64, uid int64) (UserCollectionBiz, error)
 	Get(ctx context.Context, biz string, id int64) (Interactive, error)
 	BatchIncrReadCnt(ctx context.Context, bizs []string, ids []int64) error
+	GetByIds(ctx context.Context, biz string, ids []int64) ([]Interactive, error)
 }
 
 type interactiveDao struct {
@@ -43,6 +44,13 @@ func (dao *interactiveDao) BatchIncrReadCnt(ctx context.Context, bizs []string, 
 func NewinteractiveDao(db *gorm.DB) InteractiveDao {
 	return &interactiveDao{db: db}
 }
+
+func (dao *interactiveDao) GetByIds(ctx context.Context, biz string, ids []int64) ([]Interactive, error) {
+	var res []Interactive
+	err := dao.db.WithContext(ctx).Where("biz = ? AND id IN ?", biz, ids).Find(&res).Error
+	return res, err
+}
+
 func (dao *interactiveDao) IncrReadCnt(ctx context.Context, biz string, bizId int64) error {
 	now := time.Now().UnixMilli()
 	return dao.db.WithContext(ctx).Where("biz = ? AND biz_id = ?").Clauses(clause.OnConflict{

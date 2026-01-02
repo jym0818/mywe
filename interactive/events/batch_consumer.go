@@ -1,11 +1,11 @@
-package article
+package events
 
 import (
 	"context"
 	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/jym0818/mywe/internal/repository"
+	"github.com/jym0818/mywe/interactive/repository"
 	"github.com/jym0818/mywe/pkg/logger"
 	"github.com/jym0818/mywe/pkg/saramax"
 )
@@ -48,7 +48,7 @@ func (b *BatchConsumerReadEvent) Consume(msgs []*sarama.ConsumerMessage, ts []Re
 	defer cancel()
 	err := b.repo.BatchIncrReadCnt(ctx, bizs, ids)
 	if err != nil {
-		r.l.Error("批量增加阅读计数失败",
+		b.l.Error("批量增加阅读计数失败",
 			logger.Field{Key: "ids", Value: ids},
 			logger.Error(err))
 	}

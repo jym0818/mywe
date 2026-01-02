@@ -33,25 +33,15 @@ var article = wire.NewSet(
 	cache.NewarticleCache,
 	dao.NewarticleDAO)
 
-var interactive = wire.NewSet(
-	service.NewinteractiveService,
-	repository.NewinteractiveRepository,
-	cache.NewinteractiveCache,
-	dao.NewinteractiveDao,
-)
-
 func InitWebServer() *App {
 	wire.Build(
 		user,
 		code,
 		article,
-		interactive,
 
-		ioc.NewConsumers,
 		ioc.InitKafka,
 		ioc.NewSyncProducer,
 		article2.NewKafkaProducer,
-		article2.NewInteractiveReadEventConsumer,
 		ioc.InitLogger,
 		ioc.InitWechat,
 		web.NewWechatHandler,
@@ -61,6 +51,11 @@ func InitWebServer() *App {
 		ioc.InitRedis,
 		ioc.InitHandler,
 		ioc.InitRatelimit,
+
+		service.NewBatchRankingService,
+		ioc.InitRankingJob,
+		ioc.InitJobs,
+		ioc.InitIntrClient,
 		wire.Struct(new(App), "*"),
 	)
 	return new(App)

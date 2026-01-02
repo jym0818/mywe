@@ -2,6 +2,7 @@ package ioc
 
 import (
 	"github.com/IBM/sarama"
+	"github.com/jym0818/mywe/interactive/events"
 	"github.com/spf13/viper"
 )
 
@@ -23,10 +24,7 @@ func InitKafka() sarama.Client {
 	return client
 
 }
-func NewSyncProducer(client sarama.Client) sarama.SyncProducer {
-	res, err := sarama.NewSyncProducerFromClient(client)
-	if err != nil {
-		panic(err)
-	}
-	return res
+
+func NewConsumers(c1 *events.InteractiveReadEventConsumer) []events.Consumer {
+	return []events.Consumer{c1}
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/jym0818/mywe/internal/domain"
 	events "github.com/jym0818/mywe/internal/events/article"
@@ -15,11 +16,17 @@ type ArticleService interface {
 	GetByAuthor(ctx context.Context, uid int64, offset int, limit int) ([]domain.Article, error)
 	GetById(ctx context.Context, id int64) (domain.Article, error)
 	GetPubById(ctx context.Context, id, uid int64) (domain.Article, error)
+	ListPub(ctx context.Context, now time.Time, offset int, size int) ([]domain.Article, error)
 }
 
 type articleService struct {
 	repo     repository.ArticleRepository
 	producer events.Producer
+}
+
+func (svc *articleService) ListPub(ctx context.Context, now time.Time, offset int, size int) ([]domain.Article, error) {
+	return svc.repo.ListPub(ctx, now, offset, size)
+
 }
 
 func NewarticleService(repo repository.ArticleRepository, producer events.Producer) ArticleService {
